@@ -1,33 +1,70 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const app = express();
 const PORT = 3000;
 
-// Middleware to let our server read JSON data
 app.use(express.json());
+
+// --- CONNECT TO MONGODB ---
+// Make sure your MongoDB is running locally, or use a MongoDB Atlas connection string
+mongoose.connect('mongodb://127.0.0.1:27017/nexusflow')
+.then(() => console.log('Connected to MongoDB successfully!'))
+.catch((err) => console.error('MongoDB connection error:', err));
+
+// --- DEFINE TIME-SERIES SCHEMA & MODEL ---
+const telemetrySchema = new mongoose.Schema({
+  deviceId: { type: String, required: true },
+  deviceType: String,
+  metrics: {
+    temperature: Number,
+    pressure: Number,
+    vibration_hz: Number
+  },
+  status: {
+    batteryLevel: Number,
+    errorFlag: Boolean
+  }
+}, { 
+  timestamps: true,
+  // Setting up a time-series collection structure in MongoDB
+  timeseries: {
+    timeField: 'createdAt',
+    metaField: 'deviceId',
+    granularity: 'seconds'
+  }
+});
+
+const Telemetry = mongoose.model('Telemetry', telemetrySchema);
 
 // Test route
 app.get('/', (req, res) => {
-  res.send('NexusFlow Backend is running smoothly!');
+  res.send('NexusFlow Backend with MongoDB is running!');
 });
 
-// --- DAY 3: TELEMETRY INGESTION API ---
-app.post('/api/telemetry', (req, res) => {
-  const telemetryData = req.body;
+// --- INGESTION API (SAVING TO MONGODB) ---
+app.post('/api/telemetry', async (req, res) => {
+  try {
+    const telemetryData = req.body;
 
-  // Print the incoming data in your terminal so you can see it
-  console.log('Received Telemetry Data:', telemetryData);
+    if (!telemetryData.deviceId) {
+      return res.status(400).json({ error: 'Missing deviceId in telemetry payload' });
+    }
 
-  // Check if data actually came in
-  if (!telemetryData.deviceId) {
-    return res.status(400).json({ error: 'Missing deviceId in telemetry payload' });
+    // Save the incoming data to MongoDB
+    const newRecord = new Telemetry(telemetryData);
+    await newRecord.save();
+
+    console.log('Saved to MongoDB:', newRecord);
+
+    res.status(201).json({
+      success: true,
+      message: 'Telemetry data received and saved to database!',
+      data: newRecord
+    });
+  } catch (error) {
+    console.error('Error saving telemetry:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  // Send a success response back to the sender
-  res.status(201).json({
-    success: true,
-    message: 'Telemetry data received successfully!',
-    receivedData: telemetryData
-  });
 });
 
 app.listen(PORT, () => {
