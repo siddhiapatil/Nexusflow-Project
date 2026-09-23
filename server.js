@@ -64,13 +64,20 @@ app.post('/api/telemetry', async (req, res) => {
   }
 });
 
-// --- DAY 5: FETCH API (GET) ---
+// --- DAY 6: FETCH TELEMETRY WITH OPTIONAL DEVICE FILTER ---
 app.get('/api/telemetry', async (req, res) => {
   try {
-    const records = await Telemetry.find().sort({ createdAt: -1 });
+    const { deviceId } = req.query;
+    
+    // If a deviceId is provided in the URL, filter by it. Otherwise, get all records.
+    const filter = deviceId ? { deviceId } : {};
+    
+    const records = await Telemetry.find(filter).sort({ createdAt: -1 });
+    
     res.status(200).json({
       success: true,
       count: records.length,
+      filterApplied: deviceId || 'none',
       data: records
     });
   } catch (error) {
