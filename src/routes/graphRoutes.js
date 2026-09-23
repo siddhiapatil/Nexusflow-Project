@@ -4,33 +4,50 @@ const router = express.Router();
 const { parseGraphPayload } = require('../parsers/graphParser');
 const { compileGraph } = require('../compiler/logicCompiler');
 const { executeWorkflow } = require('../engine/executionEngine');
+const { saveExecutionRun, getExecutionHistory } = require('../storage/workflowStore');
 
-// POST /api/v1/graphs/ingest
+// POST /api/v1/graphs/ingest - Parse, compile, execute, and store workflow
 router.post('/ingest', (req, res) => {
   try {
-    // 1. Parse and validate raw JSON structure
     const parsedData = parseGraphPayload(req.body);
-
-    // 2. Compile graph into an execution plan
     const compilationResult = compileGraph(parsedData.nodes, parsedData.edges);
-
-    // 3. Run the execution engine using the nodes and execution plan
     const executionResult = executeWorkflow(parsedData.nodes, compilationResult.executionPlan);
 
-    // 4. Return combined success response with execution logs
+    const workflowRecord = {
+      nodes: parsedData.nodes,
+      edges: parsedData.edges,
+      compilation: compilationResult,
+      execution: executionResult
+    };
+
+    // Save execution run to persistent storage
+    const savedRecord = saveExecutionRun(workflowRecord);
+
     return res.status(200).json({
       status: 'success',
-      message: 'Graph successfully parsed, compiled, and executed!',
-      data: {
-        ...parsedData,
-        compilation: compilationResult,
-        execution: executionResult
-      }
+      message: 'Graph successfully processed, executed, and saved!',
+      data: savedRecord
     });
 
   } catch (error) {
-    // Handle validation, compilation, or execution errors gracefully
     return res.status(400).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/v1/graphs/history - Retrieve all past execution runs
+router.get('/history', (req, res) => {
+  try {
+    const history = getExecutionHistory();
+    return res.status(200).json({
+      status: 'success',
+      count: history.length,
+      data: history
+    });
+  } catch (error) {
+    return res.status(500).json({
       status: 'error',
       message: error.message
     });
