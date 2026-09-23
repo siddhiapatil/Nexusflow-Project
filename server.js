@@ -112,6 +112,48 @@ app.get('/api/telemetry/latest', async (req, res) => {
   }
 });
 
+// --- DAY 8: FETCH DEVICE STATS AND AVERAGES ---
+app.get('/api/telemetry/stats', async (req, res) => {
+  try {
+    const { deviceId } = req.query;
+
+    if (!deviceId) {
+      return res.status(400).json({ error: 'Please provide a deviceId query parameter' });
+    }
+
+    const records = await Telemetry.find({ deviceId });
+
+    if (records.length === 0) {
+      return res.status(404).json({ error: 'No telemetry found for this device' });
+    }
+
+    // Calculate average temperature and pressure
+    let totalTemp = 0;
+    let totalPressure = 0;
+
+    records.forEach(r => {
+      if (r.metrics && r.metrics.temperature) totalTemp += r.metrics.temperature;
+      if (r.metrics && r.metrics.pressure) totalPressure += r.metrics.pressure;
+    });
+
+    const avgTemp = totalTemp / records.length;
+    const avgPressure = totalPressure / records.length;
+
+    res.status(200).json({
+      success: true,
+      deviceId,
+      totalReadings: records.length,
+      averages: {
+        temperature: Number(avgTemp.toFixed(2)),
+        pressure: Number(avgPressure.toFixed(2))
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating stats:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
