@@ -74,5 +74,88 @@
         }
       ]
     }
+  },
+  {
+    "id": "run_1790168951708",
+    "timestamp": "2026-09-23T13:09:11.708Z",
+    "nodes": [
+      {
+        "id": "node_1",
+        "type": "sensor_input"
+      },
+      {
+        "id": "node_2",
+        "type": "logic_processor"
+      },
+      {
+        "id": "node_3",
+        "type": "actuator_output"
+      }
+    ],
+    "edges": [
+      {
+        "source": "node_1",
+        "target": "node_2"
+      },
+      {
+        "source": "node_2",
+        "target": "node_3"
+      }
+    ],
+    "compilation": {
+      "compiledSuccessfully": true,
+      "totalSteps": 3,
+      "executionPlan": [
+        "node_1",
+        "node_2",
+        "node_3"
+      ],
+      "compiledAt": "2026-09-23T13:09:11.701Z"
+    },
+    "execution": {
+      "success": true,
+      "engineType": "RxJS Reactive Stream",
+      "totalExecuted": 3,
+      "contextSummary": {
+        "triggerTimestamp": "2026-09-23T13:09:11.702Z",
+        "lastReading": 31.8,
+        "alertTriggered": true
+      },
+      "logs": [
+        {
+          "nodeId": "node_1",
+          "type": "sensor_input",
+          "output": {
+            "status": "success",
+            "metric": "temperature",
+            "value": 31.8,
+            "unit": "Celsius"
+          },
+          "executedAt": "2026-09-23T13:09:11.705Z"
+        },
+        {
+          "nodeId": "node_2",
+          "type": "logic_processor",
+          "output": {
+            "status": "success",
+            "evaluatedCondition": true,
+            "ruleChecked": "temperature > 30",
+            "actionRequired": "dispatch_alert"
+          },
+          "executedAt": "2026-09-23T13:09:11.706Z"
+        },
+        {
+          "nodeId": "node_3",
+          "type": "actuator_output",
+          "output": {
+            "status": "success",
+            "targetDevice": "HVAC_Relay_02",
+            "actionTaken": "activated_cooling_fan",
+            "message": "Threshold breached! Cooling system activated."
+          },
+          "executedAt": "2026-09-23T13:09:11.706Z"
+        }
+      ]
+    }
   }
 ]

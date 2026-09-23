@@ -6,12 +6,14 @@ const { compileGraph } = require('../compiler/logicCompiler');
 const { executeWorkflow } = require('../engine/executionEngine');
 const { saveExecutionRun, getExecutionHistory } = require('../storage/workflowStore');
 
-// POST /api/v1/graphs/ingest - Parse, compile, execute, and store workflow
-router.post('/ingest', (req, res) => {
+// POST /api/v1/graphs/ingest - Parse, compile, RxJS execute, and store workflow
+router.post('/ingest', async (req, res) => {
   try {
     const parsedData = parseGraphPayload(req.body);
     const compilationResult = compileGraph(parsedData.nodes, parsedData.edges);
-    const executionResult = executeWorkflow(parsedData.nodes, compilationResult.executionPlan);
+    
+    // Await the RxJS reactive stream execution engine
+    const executionResult = await executeWorkflow(parsedData.nodes, compilationResult.executionPlan);
 
     const workflowRecord = {
       nodes: parsedData.nodes,
@@ -20,12 +22,11 @@ router.post('/ingest', (req, res) => {
       execution: executionResult
     };
 
-    // Save execution run to persistent storage
     const savedRecord = saveExecutionRun(workflowRecord);
 
     return res.status(200).json({
       status: 'success',
-      message: 'Graph successfully processed, executed, and saved!',
+      message: 'Graph successfully processed via RxJS stream engine and saved!',
       data: savedRecord
     });
 
@@ -37,7 +38,7 @@ router.post('/ingest', (req, res) => {
   }
 });
 
-// GET /api/v1/graphs/history - Retrieve all past execution runs
+// GET /api/v1/graphs/history
 router.get('/history', (req, res) => {
   try {
     const history = getExecutionHistory();

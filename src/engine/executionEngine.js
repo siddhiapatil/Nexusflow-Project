@@ -1,50 +1,99 @@
 // src/engine/executionEngine.js
+const { from, of } = require('rxjs');
+const { concatMap, map, catchId, toArray } = require('rxjs/operators');
 
-function executeWorkflow(nodes, executionPlan) {
-  // 1. Create a quick lookup map for nodes
-  const nodeMap = new Map();
-  nodes.forEach(node => nodeMap.set(node.id, node));
+function executeWorkflowRxJS(nodes, executionPlan) {
+  return new Promise((resolve, reject) => {
+    const nodeMap = new Map();
+    nodes.forEach(node => nodeMap.set(node.id, node));
 
-  const executionLogs = [];
-  let currentPayload = { initialTrigger: true, timestamp: new Date().toISOString() };
+    const executionLogs = [];
+    let currentContext = {
+      triggerTimestamp: new Date().toISOString(),
+      lastReading: null,
+      alertTriggered: false
+    };
 
-  // 2. Iterate through the compiled execution plan step-by-step
-  for (const nodeId of executionPlan) {
-    const node = nodeMap.get(nodeId);
-    
-    let nodeResult;
-    // 3. Simulate execution behavior based on different IoT node types
-    switch (node.type) {
-      case 'sensor_input':
-        nodeResult = { status: 'success', data: { reading: 24.5, unit: 'Celsius' } };
-        break;
-      case 'logic_processor':
-        nodeResult = { status: 'success', evaluatedCondition: true, actionTriggered: 'activate_relay' };
-        break;
-      case 'actuator_output':
-        nodeResult = { status: 'success', actionStatus: 'executed', targetDevice: 'Relay_01' };
-        break;
-      default:
-        nodeResult = { status: 'success', message: 'Generic node executed successfully' };
-    }
+    // 1. Create an RxJS Observable stream from the compiled execution plan (node IDs)
+    from(executionPlan).pipe(
+      // 2. Process each node sequentially using concatMap
+      concatMap(nodeId => {
+        const node = nodeMap.get(nodeId);
+        let nodeResult;
 
-    // 4. Record the log for this specific step
-    executionLogs.push({
-      nodeId: node.id,
-      type: node.type,
-      output: nodeResult,
-      executedAt: new Date().toISOString()
+        switch (node.type) {
+          case 'sensor_input':
+            const temperatureValue = 31.8;
+            nodeResult = {
+              status: 'success',
+              metric: 'temperature',
+              value: temperatureValue,
+              unit: 'Celsius'
+            };
+            currentContext.lastReading = temperatureValue;
+            break;
+
+          case 'logic_processor':
+            const threshold = 30.0;
+            const isExceeded = currentContext.lastReading !== null && currentContext.lastReading > threshold;
+            nodeResult = {
+              status: 'success',
+              evaluatedCondition: isExceeded,
+              ruleChecked: `temperature > ${threshold}`,
+              actionRequired: isExceeded ? 'dispatch_alert' : 'none'
+            };
+            currentContext.alertTriggered = isExceeded;
+            break;
+
+          case 'actuator_output':
+            const actionStatus = currentContext.alertTriggered ? 'activated_cooling_fan' : 'standby';
+            nodeResult = {
+              status: 'success',
+              targetDevice: 'HVAC_Relay_02',
+              actionTaken: actionStatus,
+              message: currentContext.alertTriggered ? 'Threshold breached! Cooling system activated.' : 'Normal operation. System on standby.'
+            };
+            break;
+
+          default:
+            nodeResult = {
+              status: 'success',
+              message: 'Generic stream node executed successfully.'
+            };
+        }
+
+        const logEntry = {
+          nodeId: node.id,
+          type: node.type,
+          output: nodeResult,
+          executedAt: new Date().toISOString()
+        };
+
+        return of(logEntry);
+      }),
+      // 3. Collect all emitted logs into an array stream
+      toArray()
+    ).subscribe({
+      next: (logs) => {
+        resolve({
+          success: true,
+          engineType: 'RxJS Reactive Stream',
+          totalExecuted: logs.length,
+          contextSummary: currentContext,
+          logs: logs
+        });
+      },
+      error: (err) => {
+        reject(new Error(`RxJS Execution Stream Error: ${err.message}`));
+      }
     });
+  });
+}
 
-    // Pass data forward to the next node in the pipeline
-    currentPayload = nodeResult;
-  }
-
-  return {
-    success: true,
-    totalExecuted: executionLogs.length,
-    logs: executionLogs
-  };
+// Keep backward compatibility wrapper if synchronous calls are expected elsewhere, 
+// or export the async RxJS execution function.
+async function executeWorkflow(nodes, executionPlan) {
+  return await executeWorkflowRxJS(nodes, executionPlan);
 }
 
 module.exports = { executeWorkflow };
