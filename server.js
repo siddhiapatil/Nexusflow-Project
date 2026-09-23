@@ -6,7 +6,6 @@ const PORT = 3000;
 app.use(express.json());
 
 // --- CONNECT TO MONGODB ---
-// Make sure your MongoDB is running locally, or use a MongoDB Atlas connection string
 mongoose.connect('mongodb://127.0.0.1:27017/nexusflow')
 .then(() => console.log('Connected to MongoDB successfully!'))
 .catch((err) => console.error('MongoDB connection error:', err));
@@ -26,7 +25,6 @@ const telemetrySchema = new mongoose.Schema({
   }
 }, { 
   timestamps: true,
-  // Setting up a time-series collection structure in MongoDB
   timeseries: {
     timeField: 'createdAt',
     metaField: 'deviceId',
@@ -41,7 +39,7 @@ app.get('/', (req, res) => {
   res.send('NexusFlow Backend with MongoDB is running!');
 });
 
-// --- INGESTION API (SAVING TO MONGODB) ---
+// --- DAY 3 & 4: INGESTION API (POST) ---
 app.post('/api/telemetry', async (req, res) => {
   try {
     const telemetryData = req.body;
@@ -50,7 +48,6 @@ app.post('/api/telemetry', async (req, res) => {
       return res.status(400).json({ error: 'Missing deviceId in telemetry payload' });
     }
 
-    // Save the incoming data to MongoDB
     const newRecord = new Telemetry(telemetryData);
     await newRecord.save();
 
@@ -63,6 +60,21 @@ app.post('/api/telemetry', async (req, res) => {
     });
   } catch (error) {
     console.error('Error saving telemetry:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// --- DAY 5: FETCH API (GET) ---
+app.get('/api/telemetry', async (req, res) => {
+  try {
+    const records = await Telemetry.find().sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      count: records.length,
+      data: records
+    });
+  } catch (error) {
+    console.error('Fetch error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
