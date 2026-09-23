@@ -86,6 +86,32 @@ app.get('/api/telemetry', async (req, res) => {
   }
 });
 
+// --- DAY 7: FETCH LATEST TELEMETRY FOR A DEVICE ---
+app.get('/api/telemetry/latest', async (req, res) => {
+  try {
+    const { deviceId } = req.query;
+    
+    if (!deviceId) {
+      return res.status(400).json({ error: 'Please provide a deviceId query parameter' });
+    }
+    
+    // Find only one record, sorted by newest first
+    const latestRecord = await Telemetry.findOne({ deviceId }).sort({ createdAt: -1 });
+    
+    if (!latestRecord) {
+      return res.status(404).json({ error: 'No telemetry found for this device' });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: latestRecord
+    });
+  } catch (error) {
+    console.error('Error fetching latest telemetry:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
