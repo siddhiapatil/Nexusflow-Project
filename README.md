@@ -1,15 +1,29 @@
-# NexusFlow — MongoDB Time-Series Backend
+# NexusFlow — IoT Telemetry & Rule Engine Backend
 
-MongoDB Time-Series backend for the **NexusFlow** IoT telemetry & rule engine project. A production-ready database layer for real-time sensor data ingestion, storage, and querying.
+NexusFlow is a MongoDB-powered backend built for IoT telemetry ingestion, storage, aggregation, and monitoring. The project is designed to support real-time sensor data from industrial systems such as turbines, machines, and connected devices, with a focus on performance, time-series analytics, and rule-engine readiness.
 
-## Features & Work Completed
+## Project Features
 
-- **Robust database structure** — Comprehensive telemetry schema with metadata tracking for device context (`models/Telemetry.js`)
-- **Optimized time-series storage** — MongoDB Time-Series collection for efficient compression and high-frequency sensor streams (`models/Telemetry.js`)
-- **Database initialization & management** — Automated collection setup with proper indexing and configuration (`scripts/setupCollection.js`)
-- **Sample data seeding** — Pre-loaded turbine sensor readings including realistic anomalies for testing (`scripts/seedData.js`)
-- **Query testing & validation** — Comprehensive test suite covering aggregations, filters, and time-window queries (`scripts/testQueries.js`)
-- **REST API integration** — Full API endpoints for telemetry retrieval with health checks and parameterized queries (`server.js` and `routes/telemetry.js`)
+- Real-time telemetry ingestion for sensor readings from connected devices
+- MongoDB time-series collection optimized for high-frequency data streams
+- Device-aware metadata model for context such as location, device type, and sensor information
+- Efficient querying for recent telemetry, sensor filters, and rolling time-window aggregations
+- Health monitoring and database connectivity validation through API checks
+- Sample dataset generation for realistic turbine operations and anomaly detection scenarios
+- Automated database setup for collection creation, indexing, and retention policies
+- REST API endpoints for fetching telemetry and computed average values
+
+## Work Completed
+
+- Designed and implemented the core telemetry data model for sensor recordings and metadata
+- Configured MongoDB time-series storage for efficient compression and analytics
+- Added database initialization logic to create the collection and required indexes
+- Implemented TTL and retention configuration for time-series data lifecycle management
+- Seeded realistic turbine sensor data, including anomaly examples for testing and validation
+- Built query scripts to validate aggregation, filtering, and time-window behavior
+- Developed Express API endpoints for telemetry retrieval and health monitoring
+- Integrated database connectivity checks to ensure the backend is ready for production use
+- Documented setup, configuration, and usage steps for local development and testing
 
 ## Data Model
 
@@ -30,10 +44,18 @@ Each document represents one sensor reading:
 }
 ```
 
-- **timeField**: `timestamp` — Precision timestamp for all readings
-- **metaField**: `metadata` — Device context stored separately for MongoDB bucketing efficiency
-- **granularity**: `seconds` — Optimized for high-frequency sensor streams
-- **Retention**: 30-day TTL via `expireAfterSeconds`; adjust or remove it for production retention needs.
+- timeField: `timestamp` — Precision timestamp for all readings
+- metaField: `metadata` — Device metadata for contextual filtering and grouping
+- granularity: `seconds` — Optimized for high-frequency time-series streams
+- Retention: 30-day TTL via `expireAfterSeconds` for storage lifecycle management
+
+## Tech Stack
+
+- Node.js
+- Express.js
+- MongoDB 5+
+- Mongoose ODM
+- dotenv for environment configuration
 
 ## Setup
 
@@ -42,7 +64,7 @@ npm install
 cp .env.example .env      # then edit MONGODB_URI if not using the local default
 ```
 
-Requires MongoDB **5.0+** (time-series collections) running locally or an Atlas cluster.
+Requires MongoDB 5.0+ (time-series collections) running locally or on an Atlas cluster.
 
 ## Getting Started
 
@@ -60,3 +82,14 @@ curl http://localhost:5000/health
 curl http://localhost:5000/api/telemetry/turbine-02?sensorType=temperature&limit=5
 curl http://localhost:5000/api/telemetry/turbine-02/average?sensorType=temperature&window=5
 ```
+
+## API Overview
+
+- `GET /health` — verifies the MongoDB connection and collection accessibility
+- `POST /api/telemetry` — ingests a new telemetry record
+- `GET /api/telemetry/:id` — fetches recent readings for a device
+- `GET /api/telemetry/:id/average` — returns moving-average aggregated values for a sensor window
+
+## Project Goal
+
+NexusFlow aims to provide a scalable and reliable data layer for IoT telemetry use cases, supporting real-time monitoring, operational insight generation, and future rule-based automation across distributed industrial systems.
