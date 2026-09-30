@@ -105,13 +105,6 @@ curl -X POST http://localhost:4000/api/telemetry \
 curl http://localhost:4000/api/metrics/ingestion
 curl http://localhost:4000/api/metrics/storage
 ```
-
-## Documentation
-
-- **[Technical Docs](./nexusflow/README.md)** — Architecture, API endpoints, tuning, testing
-- **[Architecture](./ARCHITECTURE.md)** — System design, data flows, scaling considerations
-- **[Contributing](./CONTRIBUTING.md)** — Code style, commit messages, PR process
-
 ## API Overview
 
 | Method | Endpoint | Description |
