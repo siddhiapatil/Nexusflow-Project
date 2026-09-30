@@ -1,6 +1,6 @@
 # NexusFlow - Telemetry Ingestion (MongoDB Time-Series)
 
-MERN backend + monitor dashboard covering: time-series collection design, telemetry format, buffered ingestion (HTTP + WebSocket), sample data for rule execution, and the 5,000 writes/sec audit with reports for the Mid-Review.
+MERN backend + monitor dashboard covering: time-series collection design, telemetry format, buffered ingestion (HTTP + WebSocket), sample data for rule execution, and the 5,000 writes/sec audit with real-time operational metrics.
 
 ## Layout
 ```
@@ -19,6 +19,9 @@ npm run dev                           # HTTP :4000, WS /ws/ingest
 npm run seed                          # sample history + anomalies for rules
 cd ../client && npm install && npm run dev   # http://localhost:5173
 ```
+
+## Health checks
+`GET /health` performs a live MongoDB ping rather than only checking whether the process is running. It returns `200` with `{"status":"ok","database":"connected"}` when the dependency is available, and `503` with `{"status":"degraded","database":"unavailable"}` when MongoDB cannot be reached. This makes it suitable for container readiness probes and load-balancer checks.
 
 ## Requirement -> where it lives
 | Requirement | Implementation |
@@ -39,6 +42,7 @@ npm run simulate -- --rate=5000 --duration=60 --devices=500
 npm run audit -- --rate=5000 --duration=60
 
 # Sanity checks
+curl http://localhost:4000/health
 curl -X POST localhost:4000/api/telemetry -H 'Content-Type: application/json' \
   -d '{"deviceId":"dev-0001","sensorType":"temperature","value":24.7,"unit":"C"}'
 curl localhost:4000/api/metrics/ingestion
@@ -46,7 +50,7 @@ curl localhost:4000/api/metrics/storage
 curl localhost:4000/api/telemetry/rule-input
 ```
 
-Tuning knobs (`server/.env`): `INGEST_BATCH_SIZE`, `INGEST_MAX_INFLIGHT`, `INGEST_FLUSH_MS`, `INGEST_MAX_QUEUE`, `MONGO_POOL_SIZE`.
+Tuning knobs (`server/.env`): `INGEST_BATCH_SIZE`, `INGEST_MAX_INFLIGHT`, `INGEST_FLUSH_MS`, `INGEST_MAX_QUEUE`, `MONGO_POOL_SIZE`. Invalid negative numeric values fall back to safe defaults during configuration loading.
 
 ## Evidence checklist for the Mid-Review
 1. `reports/audit-*.md` from a 60 s+ run (throughput, latency percentiles, PASS/FAIL).
