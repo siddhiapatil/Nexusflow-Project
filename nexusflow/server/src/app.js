@@ -11,7 +11,15 @@ export function createApp(deps) {
   app.use(cors());
   app.use(express.json({ limit: '5mb' }));
 
-  app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/health', async (_req, res) => {
+    try {
+      const details = deps.healthCheck ? await deps.healthCheck() : {};
+      res.json({ status: 'ok', ...details });
+    } catch (error) {
+      console.error('[health]', error.message);
+      res.status(503).json({ status: 'degraded', database: 'unavailable' });
+    }
+  });
   app.use('/api/telemetry', telemetryRoutes(deps));
   app.use('/api/metrics', metricsRoutes(deps));
 
