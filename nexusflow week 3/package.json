@@ -1,0 +1,26 @@
+{
+  "name": "nexusflow-telemetry-engine",
+  "version": "1.0.0",
+  "description": "NexusFlow - Week 3: High-Throughput IoT Telemetry Ingestion, MongoDB Time-Series Validation & Dynamic RxJS Rule Engine",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "mock:stream": "node src/generators/mockTelemetryGenerator.js",
+    "test:consistency": "node tests/consistencyTest.js",
+    "test:benchmark": "node tests/frequencyStressTest.js",
+    "test:e2e": "node tests/e2eVerificationTest.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongodb": "^6.5.0",
+    "mongoose": "^8.3.1",
+    "rxjs": "^7.8.1",
+    "ws": "^8.16.0",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "autocannon": "^7.15.0"
+  }
+}

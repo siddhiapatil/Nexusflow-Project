@@ -1,0 +1,142 @@
+[
+  {
+    "timestamp": "2026-10-08T07:00:00.000Z",
+    "metadata": {
+      "sensorId": "TURBINE-001",
+      "deviceType": "gas_turbine",
+      "location": "Sector-7G"
+    },
+    "metrics": {
+      "temperature": 73.4,
+      "rpm": 3602,
+      "pressure": 101.3
+    },
+    "status": "OPERATIONAL"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:00.100Z",
+    "metadata": {
+      "sensorId": "MOTOR-042",
+      "deviceType": "induction_motor",
+      "location": "Sector-3B"
+    },
+    "metrics": {
+      "vibration": 2.15,
+      "current": 45.1,
+      "temperature": 57.8
+    },
+    "status": "OPERATIONAL"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:00.200Z",
+    "metadata": {
+      "sensorId": "PUMP-108",
+      "deviceType": "coolant_pump",
+      "location": "Cooling-Tower-1"
+    },
+    "metrics": {
+      "flowRate": 121.4,
+      "pressure": 4.18,
+      "temperature": 37.9
+    },
+    "status": "OPERATIONAL"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:00.300Z",
+    "metadata": {
+      "sensorId": "GENERATOR-003",
+      "deviceType": "power_generator",
+      "location": "Powerhouse-Main"
+    },
+    "metrics": {
+      "voltage": 230.4,
+      "frequency": 50.01,
+      "activePower": 452.1
+    },
+    "status": "OPERATIONAL"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:01.000Z",
+    "metadata": {
+      "sensorId": "TURBINE-001",
+      "deviceType": "gas_turbine",
+      "location": "Sector-7G"
+    },
+    "metrics": {
+      "temperature": 74.1,
+      "rpm": 3608,
+      "pressure": 101.5
+    },
+    "status": "OPERATIONAL"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:02.000Z",
+    "metadata": {
+      "sensorId": "TURBINE-001",
+      "deviceType": "gas_turbine",
+      "location": "Sector-7G"
+    },
+    "metrics": {
+      "temperature": 75.3,
+      "rpm": 3612,
+      "pressure": 101.6
+    },
+    "status": "OPERATIONAL"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:03.000Z",
+    "metadata": {
+      "sensorId": "TURBINE-001",
+      "deviceType": "gas_turbine",
+      "location": "Sector-7G"
+    },
+    "metrics": {
+      "temperature": 86.5,
+      "rpm": 3640,
+      "pressure": 103.8
+    },
+    "status": "WARNING"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:04.000Z",
+    "metadata": {
+      "sensorId": "TURBINE-001",
+      "deviceType": "gas_turbine",
+      "location": "Sector-7G"
+    },
+    "metrics": {
+      "temperature": 89.2,
+      "rpm": 3655,
+      "pressure": 104.1
+    },
+    "status": "WARNING"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:05.000Z",
+    "metadata": {
+      "sensorId": "TURBINE-001",
+      "deviceType": "gas_turbine",
+      "location": "Sector-7G"
+    },
+    "metrics": {
+      "temperature": 91.8,
+      "rpm": 3670,
+      "pressure": 105.0
+    },
+    "status": "CRITICAL"
+  },
+  {
+    "timestamp": "2026-10-08T07:00:06.000Z",
+    "metadata": {
+      "sensorId": "MOTOR-042",
+      "deviceType": "induction_motor",
+      "location": "Sector-3B"
+    },
+    "metrics": {
+      "vibration": 5.42,
+      "current": 52.1,
+      "temperature": 64.2
+    },
+    "status": "CRITICAL"
+  }
+]
