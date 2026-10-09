@@ -2,10 +2,18 @@
 const { from, of, Subject } = require('rxjs');
 const { concatMap, map, filter, toArray } = require('rxjs/operators');
 
-// 1. Create a global RxJS Subject for live WebSocket telemetry ingestion (Day 3 & 4)
+// 1. Create global RxJS Subjects for live telemetry and alerts (Day 3, 4 & 5)
 const telemetrySubject = new Subject();
+const alertSubject = new Subject();
 
-// Setup live stream subscriber for in-memory monitoring and alert broadcasting
+// Setup alert subscriber for broadcasting threshold breaches
+alertSubject.subscribe({
+  next: (alertEvent) => {
+    console.log("🚨 [ALERT BROADCAST]:", alertEvent);
+  }
+});
+
+// Setup live stream subscriber for in-memory monitoring
 telemetrySubject.pipe(
   map(data => ({
     ...data,
@@ -21,40 +29,94 @@ telemetrySubject.pipe(
   }
 });
 
+/**
+ * Day 5 Task: Compile saved React Flow JSON nodes into dynamic RxJS operators.
+ */
+function compileGraphToOperators(nodes) {
+  const operators = [];
+
+  nodes.forEach(node => {
+    if (node.type === 'logic_processor') {
+      const config = node.data || {};
+      const threshold = config.threshold || 30.0;
+      const metric = config.metric || 'temperature';
+
+      // Dynamic Filter Operator
+      operators.push(
+        filter(telemetry => {
+          if (telemetry.metric !== metric) return false;
+          return telemetry.value > threshold;
+        })
+      );
+
+      // Dynamic Map Operator to generate structured alert event
+      operators.push(
+        map(telemetry => ({
+          alertId: `alert-${Date.now()}`,
+          sensorId: telemetry.sensorId,
+          metric: telemetry.metric,
+          value: telemetry.value,
+          threshold: threshold,
+          message: `Threshold breached! ${telemetry.metric} value ${telemetry.value} exceeded limit of ${threshold}.`,
+          timestamp: new Date().toISOString()
+        }))
+      );
+    }
+  });
+
+  return operators;
+}
+
+/**
+ * Attach compiled React Flow graph nodes to the live telemetry stream pipeline.
+ */
+function attachGraphPipeline(nodes) {
+  const dynamicOperators = compileGraphToOperators(nodes);
+  
+  let stream = telemetrySubject.asObservable();
+  dynamicOperators.forEach(op => {
+    stream = stream.pipe(op);
+  });
+
+  stream.subscribe({
+    next: (alertResult) => {
+      alertSubject.next(alertResult);
+    },
+    error: (err) => {
+      console.error("❌ Pipeline Error:", err);
+    }
+  });
+}
+
 function executeWorkflowRxJS(nodes, executionPlan) {
   return new Promise((resolve, reject) => {
     const nodeMap = new Map();
     nodes.forEach(node => nodeMap.set(node.id, node));
 
-    const executionLogs = [];
     let currentContext = {
       triggerTimestamp: new Date().toISOString(),
-      lastReading: null,
+      lastReading: 31.8,
       alertTriggered: false
     };
 
-    // 1. Create an RxJS Observable stream from the compiled execution plan (node IDs)
     from(executionPlan).pipe(
-      // 2. Process each node sequentially using concatMap
       concatMap(nodeId => {
         const node = nodeMap.get(nodeId);
         let nodeResult;
 
         switch (node.type) {
           case 'sensor_input':
-            const temperatureValue = 31.8;
             nodeResult = {
               status: 'success',
               metric: 'temperature',
-              value: temperatureValue,
+              value: currentContext.lastReading,
               unit: 'Celsius'
             };
-            currentContext.lastReading = temperatureValue;
             break;
 
           case 'logic_processor':
             const threshold = 30.0;
-            const isExceeded = currentContext.lastReading !== null && currentContext.lastReading > threshold;
+            const isExceeded = currentContext.lastReading > threshold;
             nodeResult = {
               status: 'success',
               evaluatedCondition: isExceeded,
@@ -70,7 +132,7 @@ function executeWorkflowRxJS(nodes, executionPlan) {
               status: 'success',
               targetDevice: 'HVAC_Relay_02',
               actionTaken: actionStatus,
-              message: currentContext.alertTriggered ? 'Threshold breached! Cooling system activated.' : 'Normal operation. System on standby.'
+              message: currentContext.alertTriggered ? 'Threshold breached! Cooling system activated.' : 'Normal operation.'
             };
             break;
 
@@ -81,22 +143,19 @@ function executeWorkflowRxJS(nodes, executionPlan) {
             };
         }
 
-        const logEntry = {
+        return of({
           nodeId: node.id,
           type: node.type,
           output: nodeResult,
           executedAt: new Date().toISOString()
-        };
-
-        return of(logEntry);
+        });
       }),
-      // 3. Collect all emitted logs into an array stream
       toArray()
     ).subscribe({
       next: (logs) => {
         resolve({
           success: true,
-          engineType: 'RxJS Reactive Stream',
+          engineType: 'RxJS Reactive Stream with Dynamic Compilation',
           totalExecuted: logs.length,
           contextSummary: currentContext,
           logs: logs
@@ -113,7 +172,6 @@ async function executeWorkflow(nodes, executionPlan) {
   return await executeWorkflowRxJS(nodes, executionPlan);
 }
 
-// Function to simulate pushing live telemetry into the subject
 function ingestLiveTelemetry(sensorData) {
   telemetrySubject.next(sensorData);
 }
@@ -121,5 +179,7 @@ function ingestLiveTelemetry(sensorData) {
 module.exports = {
   executeWorkflow,
   telemetrySubject,
-  ingestLiveTelemetry
+  alertSubject,
+  ingestLiveTelemetry,
+  attachGraphPipeline
 };
