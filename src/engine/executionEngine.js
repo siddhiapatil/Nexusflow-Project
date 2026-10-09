@@ -1,6 +1,25 @@
 // src/engine/executionEngine.js
-const { from, of } = require('rxjs');
-const { concatMap, map, catchId, toArray } = require('rxjs/operators');
+const { from, of, Subject } = require('rxjs');
+const { concatMap, map, filter, toArray } = require('rxjs/operators');
+
+// 1. Create a global RxJS Subject for live WebSocket telemetry ingestion (Day 3 & 4)
+const telemetrySubject = new Subject();
+
+// Setup live stream subscriber for in-memory monitoring and alert broadcasting
+telemetrySubject.pipe(
+  map(data => ({
+    ...data,
+    receivedAt: new Date().toISOString(),
+    processedInMem: true
+  }))
+).subscribe({
+  next: (processedData) => {
+    console.log("📥 [Live Stream] Telemetry received & processed:", processedData);
+  },
+  error: (err) => {
+    console.error("❌ [Live Stream Error]:", err);
+  }
+});
 
 function executeWorkflowRxJS(nodes, executionPlan) {
   return new Promise((resolve, reject) => {
@@ -90,10 +109,17 @@ function executeWorkflowRxJS(nodes, executionPlan) {
   });
 }
 
-// Keep backward compatibility wrapper if synchronous calls are expected elsewhere, 
-// or export the async RxJS execution function.
 async function executeWorkflow(nodes, executionPlan) {
   return await executeWorkflowRxJS(nodes, executionPlan);
 }
 
-module.exports = { executeWorkflow };
+// Function to simulate pushing live telemetry into the subject
+function ingestLiveTelemetry(sensorData) {
+  telemetrySubject.next(sensorData);
+}
+
+module.exports = {
+  executeWorkflow,
+  telemetrySubject,
+  ingestLiveTelemetry
+};
