@@ -8,5 +8,21 @@
   },
   "status": {
     "batteryLevel": 88
-  }
+  }.
+  {
+  "sensorId": "turb-sensor-09",
+  "timestamp": "2026-10-03T10:00:00Z",
+  "metric": "temperature",
+  "value": 84.5,
+  "unit": "Celsius"
+}
+{
+  "alertId": "alert_1790168951708",
+  "timestamp": "2026-10-03T10:00:01Z",
+  "ruleChecked": "temperature > 80",
+  "sensorId": "turb-sensor-09",
+  "actualValue": 84.5,
+  "status": "BREACHED",
+  "actionRequired": "dispatch_alert"
+}
 }
