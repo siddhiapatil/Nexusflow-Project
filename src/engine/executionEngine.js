@@ -172,8 +172,28 @@ async function executeWorkflow(nodes, executionPlan) {
   return await executeWorkflowRxJS(nodes, executionPlan);
 }
 
-function ingestLiveTelemetry(sensorData) {
-  telemetrySubject.next(sensorData);
+function ingestLiveTelemetry(data) {
+  // 1. Rule Evaluation Check (Example condition: Temperature threshold)
+  if (data.temperature && data.temperature > 40) {
+    const alertEvent = {
+      type: 'ANOMALY_ALERT',
+      severity: 'HIGH',
+      message: `Temperature threshold exceeded: ${data.temperature}°C`,
+      deviceId: data.deviceId || 'unknown_sensor',
+      timestamp: new Date()
+    };
+
+    console.log('🚨 Rule Triggered - Alert Generated:', alertEvent);
+
+    // 2. Broadcast via WebSocket to all connected frontend clients
+    if (global.wss) {
+      global.wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(alertEvent));
+        }
+      });
+    }
+  }
 }
 
 module.exports = {

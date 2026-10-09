@@ -1,6 +1,8 @@
 // server.js
 const express = require('express');
 const mongoose = require('mongoose');
+const http = require('http');
+const { WebSocketServer } = require('ws');
 require('dotenv').config();
 
 const app = express();
@@ -8,15 +10,27 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// --- 1. CONNECT TO MONGODB ---
+// --- 1. CREATE HTTP & WEBSOCKET SERVER ---
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+  console.log('🔌 Client connected to WebSocket telemetry/alerts stream');
+  ws.send(JSON.stringify({ message: 'Connected to NexusFlow Alert Stream' }));
+});
+
+// Global reference taaki engine se alerts broadcast kiye ja sakein
+global.wss = wss;
+
+// --- 2. CONNECT TO MONGODB ---
 mongoose.connect('mongodb://127.0.0.1:27017/nexusflow')
 .then(() => console.log('✅ Connected to MongoDB successfully!'))
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// --- 2. IMPORT WORKFLOW ENGINE & TELEMETRY INGESTION ---
+// --- 3. IMPORT WORKFLOW ENGINE & TELEMETRY INGESTION ---
 const { executeWorkflow, ingestLiveTelemetry } = require('./src/engine/executionEngine');
 
-// --- 3. ROUTES ---
+// --- 4. ROUTES ---
 
 // Health Check Route
 app.get('/health', (req, res) => {
@@ -57,7 +71,7 @@ app.post('/api/telemetry', async (req, res) => {
   }
 });
 
-// --- 4. START SERVER ---
-app.listen(PORT, () => {
+// --- 5. START SERVER ---
+server.listen(PORT, () => {
   console.log(`🚀 NexusFlow Backend running on http://localhost:${PORT}`);
 });
